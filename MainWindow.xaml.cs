@@ -1,19 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using Ionic.Zip;
 using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace BuildBuddy
 {
@@ -30,13 +24,21 @@ namespace BuildBuddy
 
         private void AddBt_OnClick(object sender, RoutedEventArgs e)
         {
-           ListBoxItem esy = new ListBoxItem();
-            esy.Content = ItemComboBox.Text + " : " + AoSComboBox.Text ;
-            ListBox.Items.Add(esy);
-            using (StreamWriter writer = new StreamWriter(ChampTxBx.Text + "-SummonersRift" + ".txt", true))
+            if (Item == 0.ToString())
             {
-                writer.Write(Item + ":" + BoS + ",");
+                this.ShowMessageAsync("Error", "Item Not Selected !");
             }
+            else
+            {
+                ListBoxItem esy = new ListBoxItem();
+                esy.Content = ItemComboBox.Text + " : " + AoSComboBox.Text;
+                ListBox.Items.Add(esy);
+                using (StreamWriter writer = new StreamWriter(ChampTxBx.Text + "-SummonersRift" + ".txt", true))
+                {
+                    writer.Write(Item + ":" + BoS + ",");
+                }
+            }
+           
             //File.WriteAllText(ChampTxBx.Text + "-SummonersRift" + ".txt", Item + ":" + BoS + ",");
         }
 
@@ -915,6 +917,77 @@ namespace BuildBuddy
             {
                 writer.Write("2003:StopHpPot,");
             }
+        }
+
+        private void InfoBt(object sender, RoutedEventArgs e)
+        {
+            this.ShowMessageAsync("Info", "This Program Created By Adilx05 For Elobuddy Community ");
+        }
+
+        private async void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            Process sil = new Process();
+            sil.StartInfo.FileName = "cmd.exe";
+            sil.StartInfo.Arguments = "/C RMDIR \"Temp\" /S /Q ";
+            sil.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            sil.Start();
+
+            Process sil2 = new Process();
+            sil2.StartInfo.FileName = "cmd.exe";
+            sil2.StartInfo.Arguments = "/C DEL Build Buddy.zip /S /Q";
+            sil2.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            sil2.Start();
+
+            var wc = new WebClient { Proxy = null };
+
+            try
+            {
+                var guncelleme = wc.DownloadString("https://raw.githubusercontent.com/Adilx05/BuildBuddy/master/version.txt");
+                if (guncelleme != "100")
+                {
+                    using (var client = new WebClient())
+                    {
+                        var controller = await this.ShowProgressAsync("Please Wait", "Updating");
+                        client.DownloadFile(
+                            "https://raw.githubusercontent.com/Adilx05/BuildBuddy/master/Build%20Buddy.zip",
+                            "Build Buddy.zip");
+                        client.DownloadFileCompleted += Client_DownloadFileCompleted;
+                        string cikarilacak = "Build Buddy.zip";
+                        using (ZipFile zip1 = ZipFile.Read(cikarilacak))
+                        {
+                            foreach (ZipEntry s in zip1)
+                            {
+                                s.Extract("Temp", ExtractExistingFileAction.OverwriteSilently);
+                            }
+                        }
+                        await controller.CloseAsync();
+                    }
+                    await this.ShowMessageAsync("Info", "Update completed. Please restart.");
+                }
+
+
+
+            }
+            catch (Exception ex)
+            {
+                await this.ShowMessageAsync("Info", "Please check your internet connection.");
+            }
+
+        }
+
+        private void Client_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
+        {
+            //Gereksiz
+        }
+
+        private void MainWindow_OnClosed(object sender, EventArgs e)
+        {
+            Process tasi = new Process();
+
+            tasi.StartInfo.FileName = "cmd.exe";
+            tasi.StartInfo.Arguments = "/C XCOPY Temp\\* /y";
+            tasi.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            tasi.Start();
         }
     }
 }
